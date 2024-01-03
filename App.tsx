@@ -1,118 +1,190 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import { StatusBar, StyleSheet, Text, TouchableOpacity, View, Share, Alert } from 'react-native'
+import React, { useEffect, useState } from 'react'
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+// pakages imports
+import Tts from 'react-native-tts';
+import Clipboard from '@react-native-clipboard/clipboard';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5'
+import Snackbar from 'react-native-snackbar';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+// Main App starting 
+const App = () => {
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+  // states 
+  const [quote, setQuote] = useState<string>('Loading...')
+  const [quoteAuthor, setQuoteAuthor] = useState<string>('Loading...')
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isSpeaking, setIsSpeaking] = useState<boolean>(false)
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  // Speak botton pressed handler
+  Tts.setDefaultLanguage('en-GB');
+  Tts.setDefaultVoice('com.apple.ttsbundle.Moira-compact');
+  Tts.setDefaultRate(0.4);
+  Tts.setDefaultPitch(1.0);
+  const speakNow = () => {
+    try {
+      Tts.stop()
+      Tts.speak(`${quote} by ${quoteAuthor}`);
+      Tts.addEventListener('tts-start', (event) => setIsSpeaking(true));
+      Tts.addEventListener('tts-finish', (event) => setIsSpeaking(false));
+    } catch (error) {
+      console.log(error);
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+    }
+  }
+
+  // Copy to clipboard botton pressed handler
+  const copyToClipboard = () => {
+    Clipboard.setString(quote);
+    Snackbar.show({
+      text: 'Quote copied!',
+      duration: Snackbar.LENGTH_SHORT,
+    });
   };
 
+  // Share botton pressed handler
+  const onShare = async () => {
+    try {
+      await Share.share({
+        message: quote,
+      });
+    } catch (error: any) {
+      Alert.alert(error.message);
+    }
+  };
+
+  // getting random Quote from API call
+  const getQuote = () => {
+    setIsLoading(true)
+    fetch('https://api.quotable.io/quotes/random?maxLength=130')
+      .then(response => response.json())
+      .then(result => {
+        setQuote(result[0].content)
+        setQuoteAuthor(result[0].author)
+        setIsLoading(false)
+      })
+      .catch(error => {
+        console.log(error.message);
+      })
+  }
+
+  // for application starting time Api call 
+  useEffect(() => {
+    getQuote()
+  }, [])
+
+
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
+    // main container
+    <View style={styles.container}>
+      <StatusBar backgroundColor={'#5372f0'} barStyle={'light-content'} />
+      {/* Qoute section container */}
+      <View style={styles.mainSection}>
+        {/* main heading */}
+        <Text style={styles.headingText}>Quote of the Day</Text>
+        {/* main Quote */}
+        <Text style={styles.quoteText}>{quote}</Text>
+        {/* Author name */}
+        <Text style={styles.authorText}>{'---' + quoteAuthor}</Text>
+        {/* new quote getting button */}
+        <TouchableOpacity
+          style={[styles.button, styles.elevation, { backgroundColor: isLoading ? 'rgba(83,114,240,0.7)' : 'rgba(83,114,240,1)' }]}
+          activeOpacity={1}
+          onPress={getQuote}
+        >
+          <Text style={[styles.buttonText]}>{isLoading ? 'Loading...' : 'New Qoute'}</Text>
+        </TouchableOpacity>
+
+        {/* Bottom icons container */}
+        <View style={styles.iconContainer}>
+          <TouchableOpacity style={[styles.bottomIcon, { backgroundColor: isSpeaking ? '#5372F0' : '#fff' }]} onPress={speakNow}>
+            <FontAwesome5 name='volume-up' size={25} color={isSpeaking ? '#fff' : '#5372F0'} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.bottomIcon} onPress={copyToClipboard}>
+            <FontAwesome5 name='copy' size={25} color={'#5372F0'} />
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.bottomIcon]} onPress={onShare}>
+            <FontAwesome5 name='share-alt' size={25} color={'#5372F0'} />
+          </TouchableOpacity>
         </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
+      </View>
+    </View>
+  )
 }
 
+export default App
+// Styles
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
+    backgroundColor: '#5372F0',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  sectionTitle: {
-    fontSize: 24,
+  mainSection: {
+    width: '90%',
+    height: 'auto',
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 20
+  },
+  headingText: {
+    fontSize: 30,
+    textAlign: 'center',
+    fontWeight: 'bold',
+    color: '#666',
+    marginBottom: 20,
+  },
+  quoteText: {
+    fontSize: 18,
+    lineHeight: 26,
+    letterSpacing: 1.2,
+    fontWeight: '600',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  authorText: {
+    fontSize: 16,
+    color: '#000',
+    textAlign: 'right',
+    marginBottom: 10,
+    fontStyle: 'italic',
+    fontWeight: '500'
+  },
+  button: {
+    padding: 15,
+    width: '95%',
+    alignSelf: 'center',
+    marginBottom: 20,
+    borderRadius: 40,
+  },
+  buttonText: {
+    textAlign: 'center',
+    color: '#fff',
+    fontSize: 26,
     fontWeight: '600',
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
+  iconContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around'
   },
-  highlight: {
-    fontWeight: '700',
-  },
-});
+  bottomIcon: {
+    borderWidth: 2,
+    borderColor: '#5372F0',
+    padding: 15,
+    borderRadius: 50,
 
-export default App;
+  },
+  elevation: {
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.34,
+    shadowRadius: 6.27,
+    elevation: 10,
+  }
+})
