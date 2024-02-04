@@ -1,5 +1,17 @@
-import { StatusBar, StyleSheet, Text, TouchableOpacity, View, Share, Alert } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import {
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Share,
+  Alert
+} from 'react-native'
+
+import React, {
+  useEffect,
+  useState
+} from 'react'
 
 // pakages imports
 import Tts from 'react-native-tts';
@@ -17,20 +29,15 @@ const App = () => {
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false)
 
 
-  // Speak botton pressed handler
-  Tts.setDefaultLanguage('en-GB');
-  Tts.setDefaultVoice('com.apple.ttsbundle.Moira-compact');
-  Tts.setDefaultRate(0.4);
-  Tts.setDefaultPitch(1.0);
   const speakNow = () => {
     try {
+      setIsSpeaking(true)
       Tts.stop()
-      Tts.speak(`${quote} by ${quoteAuthor}`);
-      Tts.addEventListener('tts-start', (event) => setIsSpeaking(true));
-      Tts.addEventListener('tts-finish', (event) => setIsSpeaking(false));
+      Tts.speak(`${quote} by ${quoteAuthor}`);;
+      // Tts.addEventListener('tts-start', () => );
+      Tts.addEventListener('tts-finish', () => setIsSpeaking(false));
     } catch (error) {
       console.log(error);
-
     }
   }
 
@@ -74,6 +81,7 @@ const App = () => {
     getQuote()
   }, [])
 
+  
 
   return (
     // main container
@@ -101,10 +109,10 @@ const App = () => {
           <TouchableOpacity style={[styles.bottomIcon, { backgroundColor: isSpeaking ? '#5372F0' : '#fff' }]} onPress={speakNow}>
             <FontAwesome5 name='volume-up' size={25} color={isSpeaking ? '#fff' : '#5372F0'} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.bottomIcon} onPress={copyToClipboard}>
+          <TouchableOpacity style={styles.bottomIcon} onPress={copyToClipboard} activeOpacity={0.6}>
             <FontAwesome5 name='copy' size={25} color={'#5372F0'} />
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.bottomIcon]} onPress={onShare}>
+          <TouchableOpacity style={[styles.bottomIcon]} onPress={onShare} activeOpacity={0.6}>
             <FontAwesome5 name='share-alt' size={25} color={'#5372F0'} />
           </TouchableOpacity>
         </View>
